@@ -4,6 +4,7 @@ import re
 
 default_match_count_limit = int(1e6)
 
+
 # for local usage from db (single yaml file)
 # * intro_text: string. if set, text to display at start of session (optional)
 # * intro_stats: bool. if set, display some stats about the story at start of session (optional)
@@ -14,21 +15,22 @@ default_match_count_limit = int(1e6)
 #     * date: date|datetime. date for the entry. matches will be returned in order of date ascending
 #     * text: string. the content of the entry to be displayed
 def get_story(file_name):
-    with open(file_name, 'r') as file:
+    with open(file_name, "r") as file:
         story = yaml.safe_load(file)
 
         # defaults
-        if 'match_count_limit' not in story or story['match_count_limit'] == 0:
-            story['match_count_limit'] = default_match_count_limit
+        if "match_count_limit" not in story or story["match_count_limit"] == 0:
+            story["match_count_limit"] = default_match_count_limit
 
         # populate entry ids if not set
-        for idx, entry in enumerate(story['entries']):
-            if 'id' not in entry:
-                entry['id'] = str(idx)
+        for idx, entry in enumerate(story["entries"]):
+            if "id" not in entry:
+                entry["id"] = str(idx)
 
         # ensure entries sorted for downstream users
-        story['entries'] = sorted(story['entries'], key=lambda x: x['date'])
+        story["entries"] = sorted(story["entries"], key=lambda x: x["date"])
         return story
+
 
 # follow "her story" logic
 def search_entries(entries, search_term):
@@ -43,7 +45,7 @@ def search_entries(entries, search_term):
     # search "car" matches "cars"                   (unpluralization)
     # search "s" matches "hello"                    ("s" gets unpluralized into empty list)
     def matches_entry(entry, search_term):
-        entry_parts = tokenize_text(entry['text'])
+        entry_parts = tokenize_text(entry["text"])
         search_term_parts = tokenize_text(search_term)
         for p in search_term_parts:
             if p not in entry_parts:
@@ -51,13 +53,15 @@ def search_entries(entries, search_term):
         return True
 
     results = [entry for entry in entries if matches_entry(entry, search_term)]
-    return sorted(results, key=lambda x: x['date'])
+    return sorted(results, key=lambda x: x["date"])
+
 
 # follow "her story" logic
 # naive convesion of string into non-plural, alphanumeric parts
 def tokenize_text(txt):
-    ts = [unpluralize(t) for t in re.split('[^a-zA-Z]', txt.lower())]
-    return [t for t in ts if t != '']
+    ts = [unpluralize(t) for t in re.split("[^a-zA-Z]", txt.lower())]
+    return [t for t in ts if t != ""]
+
 
 # follow "her story" logic
 # naive convesion of string into non-plural parts
@@ -65,14 +69,19 @@ def unpluralize(w):
     if w.endswith("ss"):
         return w
     elif w.endswith("es"):
-        return w[:len(w)-2]
+        return w[: len(w) - 2]
     if w.endswith("s"):
-        return w[:len(w)-1]
+        return w[: len(w) - 1]
     return w
 
-def get_short_date_and_text(entry):
-    date = entry['date'].strftime("%m/%d/%Y")
-    if type(entry['date']) is datetime.datetime:
-        date = entry['date'].strftime("%m/%d/%Y, %H:%M:%S")
 
-    return date + ": " + (entry['text'][:75] + '..' if len(entry['text']) > 75 else entry['text'])
+def get_short_date_and_text(entry):
+    date = entry["date"].strftime("%m/%d/%Y")
+    if type(entry["date"]) is datetime.datetime:
+        date = entry["date"].strftime("%m/%d/%Y, %H:%M:%S")
+
+    return (
+        date
+        + ": "
+        + (entry["text"][:75] + ".." if len(entry["text"]) > 75 else entry["text"])
+    )
